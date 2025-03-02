@@ -1,0 +1,76 @@
+import requests
+import os
+import json
+
+# Konfigurasi
+base_url = "https://tanahair.indonesia.go.id/api-inageo/unduh/demnas"
+token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiMTZiNjEwYTgtYTFiZC00ZTczLWJmZmUtMzY5MDA3NTI2OTU3IiwiaWF0IjoxNzQwNDczMTQ3LCJleHAiOjE3NDA0NzY3NDd9.Po1HdapJsG0cCxJGBgDwhnLEUeUu7h1jyq1cF_krQtw"  # Ganti token jika expired
+
+# Load file JSON yang berisi daftar filename
+json_path = "D:\project\py\demnas.json"  # Ganti dengan path JSON jika perlu
+with open(json_path, "r", encoding="utf-8") as file:
+    data = json.load(file)
+
+# Ekstrak filename berdasarkan region
+region_files = {}
+if "features" in data:
+    for feature in data["features"]:
+        if "properties" in feature:
+            region = feature["properties"].get("REGION", "UNKNOWN").replace(" ", "_")  # Ganti spasi dengan underscore
+            filename = feature["properties"].get("NAMOBJ")
+
+            if filename:
+                if region not in region_files:
+                    region_files[region] = []
+                region_files[region].append(filename)
+
+# Pilih region yang ingin diunduh
+selected_regions = ["SUMATERA"]  # Ubah sesuai kebutuhan
+
+# Loop setiap region
+for region in selected_regions:
+    if region not in region_files:
+        print(f"⚠️ Region {region} tidak ditemukan!")
+        continue
+
+    save_dir = f"D:\project\py\DEMNAS INA/{region}"
+    os.makedirs(save_dir, exist_ok=True)
+
+    # File log untuk mencatat file yang sudah diunduh
+    log_file = os.path.join(save_dir, "downloaded_files.txt")
+
+    # Load daftar file yang sudah sukses diunduh
+    downloaded_files = set()
+    if os.path.exists(log_file):
+        with open(log_file, "r") as log:
+            downloaded_files = set(log.read().splitlines())
+
+    filenames = region_files[region]
+    print(f"\n🔹 Mengunduh {len(filenames)} file untuk region: {region}")
+
+    for idx, filename in enumerate(filenames, start=1):
+        file_url = f"{base_url}?token={token}&filename=DEMNAS_{filename}_v1.0.tif"
+        save_path = os.path.join(save_dir, f"DEMNAS_{filename}_v1.0.tif")
+
+        # Skip jika file sudah ada atau sudah terdaftar di log
+        if filename in downloaded_files and os.path.exists(save_path) and os.path.getsize(save_path) > 1024 * 1024:
+            print(f"⏭️  [{idx}/{len(filenames)}] {filename} sudah diunduh, dilewati...")
+            continue
+
+        print(f"⬇️  [{idx}/{len(filenames)}] Mengunduh {file_url} ...")
+
+        response = requests.get(file_url, stream=True)
+        if response.status_code == 200:
+            with open(save_path, "wb") as file:
+                for chunk in response.iter_content(chunk_size=1024):
+                    file.write(chunk)
+            print(f"✅ {filename} berhasil diunduh!")
+
+            # Catat di log file
+            with open(log_file, "a") as log:
+                log.write(filename + "\n")
+
+        else:
+            print(f"❌ Gagal mengunduh {filename}, status: {response.status_code}")
+
+print("\n✅ Semua file selesai diunduh berdasarkan region yang dipilih!")
