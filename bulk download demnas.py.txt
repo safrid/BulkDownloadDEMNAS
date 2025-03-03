@@ -4,7 +4,7 @@ import json
 
 # Konfigurasi
 base_url = "https://tanahair.indonesia.go.id/api-inageo/unduh/demnas"
-token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiMTZiNjEwYTgtYTFiZC00ZTczLWJmZmUtMzY5MDA3NTI2OTU3IiwiaWF0IjoxNzQwNDczMTQ3LCJleHAiOjE3NDA0NzY3NDd9.Po1HdapJsG0cCxJGBgDwhnLEUeUu7h1jyq1cF_krQtw"  # Ganti token jika expired
+token = "[ISIKAN TOKEN]"  # Ganti token jika expired
 
 # Load file JSON yang berisi daftar filename
 json_path = "D:\project\py\demnas.json"  # Ganti dengan path JSON jika perlu
